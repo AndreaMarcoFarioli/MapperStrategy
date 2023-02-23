@@ -1,5 +1,8 @@
 package utils;
 
+import exceptions.CastMethodNotFoundException;
+import exceptions.CasterNotInvokableException;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -24,52 +27,41 @@ public class MapperManagerImpl implements MapperManager{
 
 	@Override
 	public <T> T convert(Object source, Class<T> target) {
-		Method lambdaCast = getMapperMethod(source.getClass(), target);
+		CastSignatureKey key = new CastSignatureKey(source.getClass(), target);
+		Method lambdaCast = getMapperMethod(key);
+
 		if (Objects.isNull(lambdaCast)){
-			throw new RuntimeException();
+			throw new CastMethodNotFoundException();
 		}
 
-		Object obj = map.get(matchesKeys(source.getClass(), target));
+		Object obj = map.get(key);
 
 		try {
 
 			Object res = lambdaCast.invoke(obj,source);
 			return target.cast(res);
 
-		} catch (IllegalAccessException | InvocationTargetException e) {
-			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new CastMethodNotFoundException();
+		} catch (InvocationTargetException e) {
+			throw new CasterNotInvokableException();
 		}
 	}
 
-	private Method getMapperMethod(Class<?> source, Class<?> target){
-		var key = matchesKeys(source, target);
-
-		if (Objects.isNull(key)){
-			throw new RuntimeException();
-		}
-
+	private Method getMapperMethod(CastSignatureKey key){
 		GenericMapping<?,?> mapper = map.get(key);
 
 		return Arrays.stream(mapper.getClass().getMethods())
 				.filter(method ->
-					method.getReturnType().equals(target) && method.getParameterTypes()[0].equals(source))
+					method.getReturnType().equals(key.getSecond()) && method.getParameterTypes()[0].equals(key.getFirst()))
 				.findFirst().orElse(null);
 
-	}
-
-	private CastSignatureKey matchesKeys(Class<?> source, Class<?> target){
-		CastSignatureKey keyCfr = new CastSignatureKey(source, target);
-
-		return map.keySet()
-				.stream()
-				.filter(keyCfr::equals)
-				.findFirst().orElse(null);
 	}
 
 	@Override
 	public <A, B> void registerMapper(GenericMapping<A, B> mapping, Class<A> a, Class<B> b) {
 		if (Objects.isNull(mapping)){
-			throw new RuntimeException();
+			throw new NullPointerException();
 		}
 
 		CastSignatureKey castSignatureKey = new CastSignatureKey(a,b);
