@@ -24,7 +24,7 @@ public class EntityA {
 
 	@Override
 	public String toString() {
-		return "EntityA{" +
+		return "entities.EntityA{" +
 				"name='" + name + '\'' +
 				", surname='" + surname + '\'' +
 				'}';

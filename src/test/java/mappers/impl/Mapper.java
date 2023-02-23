@@ -1,12 +1,12 @@
-package mappers;
+package mappers.impl;
 
 import entities.EntityA;
 import entities.EntityB;
-import utils.MapperManagerImpl;
+import mappers.MapperAB;
 
 import java.util.Objects;
 
-public class Mapper implements MapperAB{
+public class Mapper implements MapperAB {
 
 	private static Mapper instance = null;
 
